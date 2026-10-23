@@ -12,7 +12,10 @@
 <style>
 :root {
     --navy: #071957;
+    --navy-light: #102b70;
     --blue: #1769aa;
+    --green: #16803c;
+    --red: #c62828;
     --grey: #f1f4f8;
     --text: #172033;
 }
@@ -117,36 +120,16 @@ button.cancel {
     background: #606b7a;
 }
 
-/* Compact camera preview without stretching the video */
+/* Original camera preview sizing */
 #reader {
     width: 100%;
-    height: 180px;
     margin: 12px 0;
     overflow: hidden;
     border-radius: 8px;
-    background: #000;
-    position: relative;
 }
 
-/* Preserve the camera's natural proportions */
 #reader video {
-    width: 100% !important;
-    height: 180px !important;
-    object-fit: contain !important;
     border-radius: 8px;
-}
-
-/* Keep the scanning interface within the preview */
-#reader__scan_region {
-    min-height: 0 !important;
-}
-
-#reader__scan_region video {
-    object-fit: contain !important;
-}
-
-#reader__dashboard {
-    display: none !important;
 }
 
 #result {
@@ -209,19 +192,6 @@ footer {
     header h1 {
         font-size: 22px;
     }
-
-    .step {
-        padding: 12px;
-    }
-
-    /* Keep the preview compact on smaller phones too */
-    #reader {
-        height: 180px;
-    }
-
-    #reader video {
-        height: 180px !important;
-    }
 }
 </style>
 </head>
@@ -239,28 +209,16 @@ footer {
 
         <div class="step">
             <h2>1. First Barcode</h2>
-
             <div id="status1" class="status">Not scanned</div>
-
-            <div id="barcode1" class="barcode-value">
-                Waiting for first barcode
-            </div>
-
+            <div id="barcode1" class="barcode-value">Waiting for first barcode</div>
             <button id="start1">Open Camera for Barcode 1</button>
         </div>
 
         <div class="step">
             <h2>2. Second Barcode</h2>
-
             <div id="status2" class="status">Not scanned</div>
-
-            <div id="barcode2" class="barcode-value">
-                Waiting for second barcode
-            </div>
-
-            <button id="start2" disabled>
-                Open Camera for Barcode 2
-            </button>
+            <div id="barcode2" class="barcode-value">Waiting for second barcode</div>
+            <button id="start2" disabled>Open Camera for Barcode 2</button>
         </div>
 
         <div class="step">
@@ -272,13 +230,8 @@ footer {
 
             <div id="reader"></div>
 
-            <button id="capture" disabled>
-                Capture Barcode
-            </button>
-
-            <button id="cancel" class="cancel" disabled>
-                Cancel Scan
-            </button>
+            <button id="capture" disabled>Capture Barcode</button>
+            <button id="cancel" class="cancel" disabled>Cancel Scan</button>
         </div>
 
         <div id="result" role="status" aria-live="polite">
@@ -309,9 +262,6 @@ let activeBarcode = 0;
 let barcode1Value = "";
 let barcode2Value = "";
 
-/* Prevent overlapping camera start/stop operations */
-let cameraOperation = Promise.resolve();
-
 function setCameraStatus(message) {
     $("cameraStatus").textContent = message;
 }
@@ -328,17 +278,6 @@ function updateStartButtons() {
 
     $("cancel").disabled =
         !cameraRunning && !busy;
-}
-
-function createScanner() {
-    if (scanner) return;
-
-    scanner = new Html5Qrcode("reader", {
-        formatsToSupport: [
-            Html5QrcodeSupportedFormats.CODE_128
-        ],
-        verbose: false
-    });
 }
 
 async function openCamera(barcodeNumber) {
@@ -360,16 +299,16 @@ async function openCamera(barcodeNumber) {
     setCameraStatus("Starting camera. Please wait...");
     updateStartButtons();
 
-    try {
-        createScanner();
+    if (!scanner) {
+        scanner = new Html5Qrcode("reader", {
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.CODE_128
+            ],
+            verbose: false
+        });
+    }
 
-        /*
-         * Request the rear camera and prefer a higher-resolution
-         * video stream for reliable Code 128 recognition.
-         *
-         * The preview remains short, but detection uses the
-         * camera video frames rather than a cropped screenshot.
-         */
+    try {
         await scanner.start(
             { facingMode: "environment" },
             {
@@ -383,15 +322,11 @@ async function openCamera(barcodeNumber) {
 
                 disableFlip: true,
 
-                /*
-                 * A wide scanning guide with extra vertical room.
-                 * The full barcode must fit inside the guide.
-                 */
                 qrbox: function(width, height) {
                     return {
                         width: Math.max(
                             100,
-                            Math.floor(width * 0.95)
+                            Math.min(500, Math.floor(width * 0.95))
                         ),
                         height: Math.max(
                             40,
@@ -405,7 +340,7 @@ async function openCamera(barcodeNumber) {
             },
             onBarcodeDetected,
             function() {
-                // No barcode in this frame: keep waiting.
+                // Ignore frames where no barcode is detected.
             }
         );
 
@@ -413,7 +348,7 @@ async function openCamera(barcodeNumber) {
         scanEnabled = false;
 
         setCameraStatus(
-            "Camera ready. Position the complete barcode in the guide, " +
+            "Camera ready. Position the full barcode in the guide, " +
             "then press Capture Barcode."
         );
 
@@ -433,14 +368,14 @@ async function openCamera(barcodeNumber) {
 
         alert(
             "Unable to start the camera. Check your camera permissions " +
-            "and ensure the page is opened using HTTPS."
+            "and make sure the page uses HTTPS."
         );
     }
 }
 
 /*
- * Detections are ignored until the Capture Barcode button is pressed.
- * Once enabled, the first valid Code 128 result is accepted.
+ * Barcode detections are ignored until Capture Barcode is pressed.
+ * Only the first valid detection after pressing the button is accepted.
  */
 async function onBarcodeDetected(decodedText) {
     if (!scanEnabled || busy || !cameraRunning) {
@@ -453,10 +388,6 @@ async function onBarcodeDetected(decodedText) {
         return;
     }
 
-    /*
-     * Lock immediately to prevent multiple detections from
-     * saving the same barcode more than once.
-     */
     busy = true;
     scanEnabled = false;
 
@@ -488,7 +419,7 @@ async function onBarcodeDetected(decodedText) {
         }
 
     } catch (error) {
-        console.error("Barcode processing error:", error);
+        console.error("Error processing barcode:", error);
 
         setCameraStatus(
             "Problem processing the barcode. Please try again."
@@ -533,7 +464,6 @@ function compareBarcodes() {
         result.classList.add("match");
 
         $("resultHeading").textContent = "MATCH";
-
         $("resultText").textContent =
             "Both barcodes are identical. Verification successful.";
 
@@ -541,13 +471,11 @@ function compareBarcodes() {
         result.classList.add("no-match");
 
         $("resultHeading").textContent = "NO MATCH";
-
         $("resultText").textContent =
             "The two barcodes are different. Please check the items.";
     }
 
     result.style.display = "block";
-
     setCameraStatus("Verification complete.");
 }
 
@@ -559,17 +487,13 @@ $("start2").addEventListener("click", function() {
     openCamera(2);
 });
 
-/*
- * Only this button enables barcode acceptance.
- * Opening the camera alone does not save any barcode.
- */
+/* Only this button enables barcode acceptance. */
 $("capture").addEventListener("click", function() {
     if (!cameraRunning || busy || scanEnabled) {
         return;
     }
 
     scanEnabled = true;
-
     $("capture").disabled = true;
 
     setCameraStatus(
@@ -604,7 +528,6 @@ $("reset").addEventListener("click", async function() {
 
     busy = true;
     scanEnabled = false;
-
     updateStartButtons();
 
     try {
