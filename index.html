@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#071957">
 <title>Lancaster Fastener - Barcode Verification</title>
 
@@ -11,436 +11,493 @@
 
 <style>
 :root {
-  --navy: #071957;
-  --navy2: #102b70;
-  --page: #f3f5f9;
-  --green: #08752a;
-  --green-bg: #d9f8e2;
-  --red: #b42318;
-  --red-bg: #ffe0e0;
+    --navy: #071957;
+    --navy-light: #102b70;
+    --blue: #1769aa;
+    --green: #16803c;
+    --red: #c62828;
+    --grey: #f1f4f8;
+    --text: #172033;
 }
 
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
 
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 12px;
-  padding-top: max(12px, env(safe-area-inset-top));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-  background: var(--page);
-  color: #17202a;
+    margin: 0;
+    padding: 16px;
+    background: var(--grey);
+    color: var(--text);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 5px 22px rgba(0,0,0,0.12);
+}
+
+header {
+    background: var(--navy);
+    color: white;
+    padding: 22px 16px;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 25px;
+    margin: 0;
+}
+
+header p {
+    margin: 7px 0 0;
+    font-size: 14px;
 }
 
 main {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 22px 18px;
-  background: white;
-  border-radius: 18px;
-  border-top: 6px solid var(--navy);
-  text-align: center;
-  box-shadow: 0 5px 24px #07195718;
+    padding: 20px;
 }
 
-.logo {
-  display: block;
-  width: 100px;
-  max-height: 120px;
-  object-fit: contain;
-  margin: 0 auto 12px;
+.step {
+    border: 1px solid #dce2eb;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 18px;
 }
 
-h1 {
-  color: var(--navy);
-  font-size: 27px;
-  margin: 0 0 7px;
+.step h2 {
+    font-size: 18px;
+    margin: 0 0 12px;
+    color: var(--navy);
 }
 
-.subtitle {
-  color: #667085;
-  font-size: 14px;
-  margin: 0 0 20px;
+.status {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    color: #555;
 }
 
-#instruction {
-  color: var(--navy);
-  font-weight: bold;
-  font-size: 16px;
-  line-height: 1.45;
-}
-
-.field-label {
-  text-align: left;
-  color: var(--navy);
-  font-size: 13px;
-  font-weight: bold;
-  margin: 18px 0 7px;
-}
-
-.value {
-  min-height: 52px;
-  padding: 14px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  font-size: 17px;
-  line-height: 1.4;
-  background: #f3f5f9;
-  border: 1px solid #e1e6ef;
-  border-radius: 10px;
+.barcode-value {
+    overflow-wrap: anywhere;
+    min-height: 46px;
+    background: #f5f7fa;
+    border: 1px solid #e0e5ed;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 16px;
+    margin-bottom: 12px;
 }
 
 button {
-  display: block;
-  width: 100%;
-  min-height: 54px;
-  padding: 15px 12px;
-  margin-top: 12px;
-  border: 0;
-  border-radius: 11px;
-  background: var(--navy);
-  color: white;
-  font-size: 17px;
-  font-weight: bold;
-  cursor: pointer;
-  touch-action: manipulation;
+    width: 100%;
+    padding: 14px 12px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--blue);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 8px;
+    touch-action: manipulation;
 }
 
-button:active { transform: scale(.99); }
-button:disabled { opacity: .55; cursor: not-allowed; }
+button:disabled {
+    background: #a8b0bd;
+    cursor: not-allowed;
+}
 
 button.secondary {
-  color: var(--navy);
-  background: white;
-  border: 2px solid var(--navy);
+    background: var(--navy);
+}
+
+button.cancel {
+    background: #606b7a;
 }
 
 #reader {
-  display: none;
-  width: 100%;
-  margin: 14px auto;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #111;
+    width: 100%;
+    margin: 12px 0;
+    overflow: hidden;
+    border-radius: 8px;
 }
 
-#reader.active { display: block; }
-
 #reader video {
-  max-width: 100% !important;
-  border-radius: 10px;
+    border-radius: 8px;
 }
 
 #result {
-  margin-top: 18px;
-  padding: 22px 10px;
-  border-radius: 12px;
-  font-size: clamp(26px, 7vw, 32px);
-  font-weight: bold;
-  overflow-wrap: anywhere;
+    display: none;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 16px;
+    overflow-wrap: anywhere;
 }
 
-.match { background: var(--green-bg); color: var(--green); }
-.different { background: var(--red-bg); color: var(--red); }
-.hidden { display: none !important; }
+#result h2 {
+    margin: 0 0 8px;
+    font-size: 28px;
+}
 
-.hint {
-  color: #667085;
-  font-size: 13px;
-  line-height: 1.5;
-  margin: 14px 0 3px;
+#result p {
+    margin: 0;
+    font-size: 15px;
+}
+
+.match {
+    display: block !important;
+    color: #155724;
+    background: #d4edda;
+    border: 2px solid #b7dfc0;
+}
+
+.no-match {
+    display: block !important;
+    color: #721c24;
+    background: #f8d7da;
+    border: 2px solid #f1bfc4;
+}
+
+#cameraStatus {
+    font-size: 14px;
+    text-align: center;
+    color: #555;
+    margin-top: 10px;
 }
 
 footer {
-  margin-top: 20px;
-  color: #98a2b3;
-  font-size: 11px;
+    text-align: center;
+    padding: 14px;
+    font-size: 12px;
+    color: #6b7280;
 }
 
-@media (max-width: 360px) {
-  main { padding: 18px 13px; }
-  .logo { width: 82px; }
-  h1 { font-size: 24px; }
-  .value { font-size: 15px; }
+@media (max-width: 400px) {
+    body {
+        padding: 8px;
+    }
+
+    main {
+        padding: 12px;
+    }
+
+    header h1 {
+        font-size: 22px;
+    }
 }
 </style>
 </head>
 
 <body>
-<main>
 
-  <!-- KEEP YOUR ORIGINAL EMBEDDED LOGO IMG LINE HERE -->
-  <!-- Copy the complete <img class="logo" ...> line from your original HTML. -->
+<div class="container">
 
-  <h1>Lancaster Fastener</h1>
-  <p class="subtitle">Barcode verification scanner</p>
+    <header>
+        <!-- Replace this heading with your embedded logo if required. -->
+        <h1>Lancaster Fastener</h1>
+        <p>Barcode Verification Scanner</p>
+    </header>
 
-  <p id="instruction" aria-live="polite">
-    Press the button to scan the first barcode.
-  </p>
+    <main>
 
-  <div id="reader"></div>
+        <div class="step">
+            <h2>1. First Barcode</h2>
+            <div id="status1" class="status">Not scanned</div>
+            <div id="barcode1" class="barcode-value">Waiting for first barcode</div>
+            <button id="start1">Open Camera for Barcode 1</button>
+        </div>
 
-  <button id="scan" type="button">Scan First Barcode</button>
-  <button id="cancel" type="button" class="secondary hidden">
-    Cancel Scan
-  </button>
+        <div class="step">
+            <h2>2. Second Barcode</h2>
+            <div id="status2" class="status">Not scanned</div>
+            <div id="barcode2" class="barcode-value">Waiting for second barcode</div>
+            <button id="start2" disabled>Open Camera for Barcode 2</button>
+        </div>
 
-  <p class="field-label">BARCODE 1</p>
-  <div class="value" id="first">Not scanned</div>
+        <div class="step">
+            <h2>Camera Scanner</h2>
 
-  <p class="field-label">BARCODE 2</p>
-  <div class="value" id="second">Not scanned</div>
+            <div id="cameraStatus">
+                Open the camera, then press Capture Barcode when ready.
+            </div>
 
-  <div id="result" class="hidden" role="status" aria-live="polite"></div>
+            <div id="reader"></div>
 
-  <p class="hint" id="hint">
-    The camera remains off until you press the scan button.
-  </p>
+            <button id="capture" disabled>Capture Barcode</button>
+            <button id="cancel" class="cancel" disabled>Cancel Scan</button>
+        </div>
 
-  <button id="again" type="button" class="secondary hidden">
-    Start Over
-  </button>
+        <div id="result">
+            <h2 id="resultHeading"></h2>
+            <p id="resultText"></p>
+        </div>
 
-  <footer>Barcode Verification</footer>
-</main>
+        <button id="reset" class="secondary">Start Over</button>
+
+    </main>
+
+    <footer>
+        Lancaster Fastener | Barcode Verification
+    </footer>
+
+</div>
 
 <script>
+"use strict";
+
 const $ = id => document.getElementById(id);
 
 let scanner = null;
-let firstCode = null;
-let secondCode = null;
+let cameraRunning = false;
+let scanEnabled = false;
 let busy = false;
-let sessionId = 0;
+let activeBarcode = 0;
+let barcode1Value = "";
+let barcode2Value = "";
 
-/*
- * IMPORTANT:
- * startScan() is called only by the Scan button.
- * There is no automatic camera startup on page load.
- */
-
-async function stopScanner() {
-  const activeScanner = scanner;
-  scanner = null;
-
-  if (activeScanner) {
-    try {
-      if (activeScanner.isScanning) {
-        await activeScanner.stop();
-      }
-    } catch (error) {
-      console.warn("Unable to stop scanner:", error);
-    }
-
-    try {
-      activeScanner.clear();
-    } catch (error) {
-      console.warn("Scanner cleanup:", error);
-    }
-  }
-
-  $("reader").classList.remove("active");
+function setCameraStatus(message) {
+    $("cameraStatus").textContent = message;
 }
 
-async function startScan() {
-  if (busy || (firstCode !== null && secondCode !== null)) {
-    return;
-  }
+function updateStartButtons() {
+    $("start1").disabled = cameraRunning || !!barcode1Value;
+    $("start2").disabled =
+        cameraRunning || !barcode1Value || !!barcode2Value;
 
-  if (typeof Html5Qrcode === "undefined") {
-    $("instruction").textContent =
-      "Scanner library unavailable. Check your internet connection.";
-    return;
-  }
+    $("capture").disabled = !cameraRunning || busy;
+    $("cancel").disabled = !cameraRunning;
+}
 
-  busy = true;
-  const thisSession = ++sessionId;
-  const scanningFirst = firstCode === null;
+async function openCamera(barcodeNumber) {
+    if (cameraRunning || busy) return;
 
-  $("scan").disabled = true;
-  $("cancel").classList.remove("hidden");
-  $("instruction").textContent = scanningFirst
-    ? "Starting camera for barcode 1..."
-    : "Starting camera for barcode 2...";
-  $("hint").textContent =
-    "Position the entire barcode inside the camera view.";
-  $("reader").classList.add("active");
-
-  let activeScanner = null;
-
-  try {
-    activeScanner = new Html5Qrcode("reader", {
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.ITF,
-        Html5QrcodeSupportedFormats.QR_CODE
-      ],
-      verbose: false
-    });
-
-    scanner = activeScanner;
-
-    await activeScanner.start(
-      { facingMode: "environment" },
-      {
-        fps: 15,
-        qrbox: (width, height) => ({
-          width: Math.min(width, Math.max(
-            160, Math.min(Math.floor(width * 0.92), 420)
-          )),
-          height: Math.min(height, Math.max(
-            75, Math.min(Math.floor(height * 0.35), 180)
-          ))
-        }),
-        disableFlip: false
-      },
-
-      async decodedText => {
-        // Ignore duplicate callbacks or callbacks from cancelled scans.
-        if (!busy || thisSession !== sessionId) return;
-
-        // Lock immediately to accept only one barcode per button press.
-        busy = false;
-        $("instruction").textContent = "Barcode captured. Stopping camera...";
-        $("scan").disabled = true;
-
-        await stopScanner();
-
-        if (thisSession !== sessionId) return;
-
-        $("cancel").classList.add("hidden");
-
-        if (scanningFirst) {
-          firstCode = decodedText;
-          $("first").textContent = firstCode;
-
-          $("instruction").textContent =
-            "First barcode captured. Press the button to scan barcode 2.";
-          $("scan").textContent = "Scan Second Barcode";
-          $("hint").textContent =
-            "The camera is off. Press the button when ready for the second barcode.";
-          $("scan").disabled = false;
-          return;
-        }
-
-        secondCode = decodedText;
-        $("second").textContent = secondCode;
-
-        const same = firstCode === secondCode;
-
-        $("result").textContent = same ? "✓ MATCH" : "✕ NO MATCH";
-        $("result").className = same ? "match" : "different";
-
-        $("instruction").textContent = "Comparison complete.";
-        $("hint").textContent = same
-          ? "Both barcode values are identical."
-          : "The barcode values are different.";
-
-        $("scan").classList.add("hidden");
-        $("again").classList.remove("hidden");
-      },
-
-      () => {
-        // No action on frames where no barcode is recognised.
-      }
-    );
-
-    // The user may have cancelled while camera startup was pending.
-    if (thisSession !== sessionId) {
-      try {
-        if (activeScanner.isScanning) await activeScanner.stop();
-      } catch (error) {}
-      try { activeScanner.clear(); } catch (error) {}
-      return;
+    if (typeof Html5Qrcode === "undefined") {
+        alert("The scanning library could not load. Check your internet connection and reload the page.");
+        return;
     }
 
-    $("instruction").textContent = scanningFirst
-      ? "Scanning barcode 1..."
-      : "Scanning barcode 2...";
-    $("hint").textContent =
-      "Align the barcode and hold your phone steady. Scanning stops after capture.";
-
-  } catch (error) {
-    if (thisSession !== sessionId) return;
-
-    await stopScanner();
+    activeBarcode = barcodeNumber;
+    scanEnabled = false;
     busy = false;
 
-    $("cancel").classList.add("hidden");
-    $("scan").disabled = false;
-    $("instruction").textContent = "Unable to start the camera.";
-    $("hint").textContent =
-      "Allow camera access and open this page using HTTPS.";
-    console.error(error);
-  }
+    $("result").style.display = "none";
+    setCameraStatus(
+        "Starting camera. Press Capture Barcode when ready."
+    );
+
+    if (!scanner) {
+        scanner = new Html5Qrcode("reader", {
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.CODE_128
+            ],
+            verbose: false
+        });
+    }
+
+    try {
+        await scanner.start(
+            { facingMode: "environment" },
+            {
+                fps: 15,
+                disableFlip: true,
+                qrbox: function(width, height) {
+                    return {
+                        width: Math.max(100, Math.min(500, Math.floor(width * 0.95))),
+                        height: Math.max(60, Math.min(180, Math.floor(height * 0.45)))
+                    };
+                }
+            },
+            onBarcodeDetected,
+            function() {
+                // Normal unsuccessful frame detection is ignored.
+            }
+        );
+
+        cameraRunning = true;
+        scanEnabled = false;
+
+        setCameraStatus(
+            "Camera ready. Press Capture Barcode to accept one barcode."
+        );
+
+        updateStartButtons();
+
+    } catch (error) {
+        console.error("Unable to start camera:", error);
+
+        cameraRunning = false;
+        scanEnabled = false;
+
+        setCameraStatus(
+            "Could not start camera. Check camera permission and use HTTPS."
+        );
+
+        updateStartButtons();
+        alert("Unable to start the camera. Check your camera permissions.");
+    }
 }
 
-async function cancelScan() {
-  if (!busy && !scanner) return;
+/*
+ * The camera may recognise barcodes continuously, but this callback
+ * ignores every detection until Capture Barcode has been pressed.
+ */
+async function onBarcodeDetected(decodedText) {
+    if (!scanEnabled || busy || !cameraRunning) {
+        return;
+    }
 
-  ++sessionId;
-  busy = false;
+    busy = true;
+    scanEnabled = false;
 
-  $("cancel").disabled = true;
-  await stopScanner();
-  $("cancel").disabled = false;
-  $("cancel").classList.add("hidden");
-  $("scan").disabled = false;
+    const capturedValue = String(decodedText).trim();
 
-  $("instruction").textContent = "Scan cancelled.";
-  $("hint").textContent =
-    "Your captured barcode has been kept. Press Scan to continue.";
+    if (!capturedValue) {
+        busy = false;
+        return;
+    }
+
+    setCameraStatus("Barcode captured. Stopping camera...");
+
+    await stopCamera();
+
+    if (activeBarcode === 1) {
+        barcode1Value = capturedValue;
+
+        $("barcode1").textContent = barcode1Value;
+        $("status1").textContent = "Barcode captured";
+        $("status1").style.color = "green";
+
+        setCameraStatus("First barcode captured. Open the camera for the second barcode.");
+
+        $("start2").disabled = false;
+
+    } else if (activeBarcode === 2) {
+        barcode2Value = capturedValue;
+
+        $("barcode2").textContent = barcode2Value;
+        $("status2").textContent = "Barcode captured";
+        $("status2").style.color = "green";
+
+        compareBarcodes();
+    }
+
+    busy = false;
+    updateStartButtons();
 }
 
-async function startOver() {
-  ++sessionId;
-  busy = false;
+async function stopCamera() {
+    scanEnabled = false;
 
-  await stopScanner();
+    if (scanner && cameraRunning) {
+        try {
+            await scanner.stop();
+        } catch (error) {
+            console.warn("Camera stop message:", error);
+        }
+    }
 
-  firstCode = null;
-  secondCode = null;
+    cameraRunning = false;
 
-  $("first").textContent = "Not scanned";
-  $("second").textContent = "Not scanned";
+    if (scanner) {
+        try {
+            scanner.clear();
+        } catch (error) {
+            console.warn("Scanner clear message:", error);
+        }
+    }
 
-  $("result").textContent = "";
-  $("result").className = "hidden";
-
-  $("instruction").textContent =
-    "Press the button to scan the first barcode.";
-  $("hint").textContent =
-    "The camera remains off until you press the scan button.";
-
-  $("scan").textContent = "Scan First Barcode";
-  $("scan").classList.remove("hidden");
-  $("scan").disabled = false;
-
-  $("cancel").classList.add("hidden");
-  $("again").classList.add("hidden");
+    updateStartButtons();
 }
 
-// These are the ONLY buttons that start, cancel or reset scanning.
-$("scan").addEventListener("click", startScan);
-$("cancel").addEventListener("click", cancelScan);
-$("again").addEventListener("click", startOver);
+function compareBarcodes() {
+    const result = $("result");
+    result.className = "";
 
-// Release the camera when the page is closed or navigated away from.
-window.addEventListener("pagehide", () => {
-  if (scanner && scanner.isScanning) {
-    scanner.stop().catch(() => {});
-  }
+    if (barcode1Value === barcode2Value) {
+        result.classList.add("match");
+        $("resultHeading").textContent = "MATCH";
+        $("resultText").textContent =
+            "Both barcodes are identical. Verification successful.";
+    } else {
+        result.classList.add("no-match");
+        $("resultHeading").textContent = "NO MATCH";
+        $("resultText").textContent =
+            "The two barcodes are different. Please check the items.";
+    }
+
+    result.style.display = "block";
+    setCameraStatus("Verification complete.");
+}
+
+$("start1").addEventListener("click", function() {
+    openCamera(1);
 });
+
+$("start2").addEventListener("click", function() {
+    openCamera(2);
+});
+
+/*
+ * This button is the only action that enables barcode acceptance.
+ * Before this click, all camera detections are ignored.
+ */
+$("capture").addEventListener("click", function() {
+    if (!cameraRunning || busy) return;
+
+    scanEnabled = true;
+    $("capture").disabled = true;
+
+    setCameraStatus(
+        "Ready to capture. Hold the barcode steady in front of the camera."
+    );
+});
+
+$("cancel").addEventListener("click", async function() {
+    scanEnabled = false;
+    busy = false;
+
+    await stopCamera();
+
+    setCameraStatus("Scan cancelled. Press an Open Camera button to try again.");
+    updateStartButtons();
+});
+
+$("reset").addEventListener("click", async function() {
+    scanEnabled = false;
+    busy = false;
+
+    await stopCamera();
+
+    barcode1Value = "";
+    barcode2Value = "";
+    activeBarcode = 0;
+
+    $("barcode1").textContent = "Waiting for first barcode";
+    $("barcode2").textContent = "Waiting for second barcode";
+
+    $("status1").textContent = "Not scanned";
+    $("status2").textContent = "Not scanned";
+
+    $("status1").style.color = "";
+    $("status2").style.color = "";
+
+    $("result").style.display = "none";
+
+    setCameraStatus(
+        "Open the camera, then press Capture Barcode when ready."
+    );
+
+    updateStartButtons();
+});
+
+updateStartButtons();
 </script>
+
 </body>
 </html>
