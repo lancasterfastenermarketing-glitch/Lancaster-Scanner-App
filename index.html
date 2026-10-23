@@ -120,7 +120,7 @@ button.cancel {
     background: #606b7a;
 }
 
-/* Original camera preview sizing */
+/* Original camera view sizing */
 #reader {
     width: 100%;
     margin: 12px 0;
@@ -266,6 +266,14 @@ function setCameraStatus(message) {
     $("cameraStatus").textContent = message;
 }
 
+/* Clear the previous MATCH / NO MATCH result */
+function clearResult() {
+    $("result").style.display = "none";
+    $("result").className = "";
+    $("resultHeading").textContent = "";
+    $("resultText").textContent = "";
+}
+
 function updateStartButtons() {
     $("start1").disabled =
         cameraRunning || busy || !!barcode1Value;
@@ -294,7 +302,8 @@ async function openCamera(barcodeNumber) {
     activeBarcode = barcodeNumber;
     scanEnabled = false;
 
-    $("result").style.display = "none";
+    // Clear the previous verification result on every new scan.
+    clearResult();
 
     setCameraStatus("Starting camera. Please wait...");
     updateStartButtons();
@@ -374,8 +383,8 @@ async function openCamera(barcodeNumber) {
 }
 
 /*
- * Barcode detections are ignored until Capture Barcode is pressed.
- * Only the first valid detection after pressing the button is accepted.
+ * Ignore detections until Capture Barcode is pressed.
+ * Accept only the first valid barcode after the button is pressed.
  */
 async function onBarcodeDetected(decodedText) {
     if (!scanEnabled || busy || !cameraRunning) {
@@ -546,7 +555,7 @@ $("reset").addEventListener("click", async function() {
         $("status1").style.color = "";
         $("status2").style.color = "";
 
-        $("result").style.display = "none";
+        clearResult();
 
         setCameraStatus(
             "Open the camera, then press Capture Barcode when ready."
